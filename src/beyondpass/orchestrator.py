@@ -8,8 +8,10 @@ komplettes Benchmark-Subset und schreibt JSONL (FR-1001), mit Resume-Support
 from __future__ import annotations
 
 import json
+import threading
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -141,15 +143,34 @@ def _write_run_meta(out_path: Path, settings: Settings) -> None:
 
 
 def run(settings: Settings, tasks: list[Task], llm: LLMClient, out_path: Path) -> None:
-    """Fuehrt den Loop ueber alle Aufgaben aus und haengt JSONL an (FR-1001, FR-906)."""
+    """Fuehrt den Loop ueber alle Aufgaben aus und haengt JSONL an (FR-1001, FR-906).
+
+    Bei `settings.run.parallel_workers > 1` werden Aufgaben nebenlaeufig ueber
+    einen Thread-Pool verarbeitet (FR-908); das Schreiben in die Ausgabedatei
+    ist ueber einen Lock serialisiert. Mit dem Default (1) laeuft alles wie
+    zuvor rein sequenziell ueber einen einzigen, dauerhaft offenen Handle.
+    """
     completed_task_ids = _load_completed_task_ids(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     _write_run_meta(out_path, settings)
 
+    pending = [task for task in tasks if task.task_id not in completed_task_ids]
+    write_lock = threading.Lock()
+
     with out_path.open("a", encoding="utf-8") as f:
-        for task in tasks:
-            if task.task_id in completed_task_ids:
-                continue
+
+        def _process(task: Task) -> None:
             for result in run_task_loop(task, settings.run.mode, settings, llm):
-                f.write(result.to_json_line() + "\n")
-                f.flush()
+                with write_lock:
+                    f.write(result.to_json_line() + "\n")
+                    f.flush()
+
+        workers = max(1, settings.run.parallel_workers)
+        if workers == 1:
+            for task in pending:
+                _process(task)
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = [executor.submit(_process, task) for task in pending]
+                for future in as_completed(futures):
+                    future.result()

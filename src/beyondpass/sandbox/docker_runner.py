@@ -4,7 +4,7 @@ Erfuellt FR-401 bis FR-407 sowie SEC-1 bis SEC-6:
 - kein `exec`/`eval` im Host-Prozess (SEC-1)
 - Container ohne Netzwerkzugang (SEC-2, FR-405)
 - Ausfuehrung als nicht-privilegierter Nutzer (SEC-3)
-- Ressourcenlimits: Memory, PID-Anzahl (SEC-4, FR-407)
+- Ressourcenlimits: Memory, CPU, PID-Anzahl (SEC-4, FR-407)
 - einziges Volume ist ein temporaeres Arbeitsverzeichnis (SEC-5)
 - Container wird nach jeder Ausfuehrung entfernt, kein Zustand zwischen
   Aufgaben (SEC-6)
@@ -24,6 +24,7 @@ IMAGE_TAG = "beyondpass-sandbox:latest"
 _DOCKERFILE_DIR = Path(__file__).resolve().parent
 _CONTAINER_WORKDIR = "/sandbox"
 _PIDS_LIMIT = 64
+_NANO_CPUS = 1_000_000_000  # 1 CPU-Kern (FR-407, SEC-4)
 
 
 @dataclass
@@ -90,6 +91,7 @@ def run_in_sandbox(
                 user="nobody",
                 mem_limit=f"{memory_mb}m",
                 pids_limit=_PIDS_LIMIT,
+                nano_cpus=_NANO_CPUS,
                 detach=True,
                 name=f"beyondpass-{uuid.uuid4().hex[:12]}",
             )

@@ -11,7 +11,7 @@ import pytest
 from beyondpass.benchmarks.humaneval import load_humaneval
 from beyondpass.config import load_settings
 from beyondpass.orchestrator import run
-from tests.agents.fake_llm import FakeLLMClient
+from tests.agents.fake_llm import FakeLLMClient, KeyedFakeLLMClient
 
 pytestmark = pytest.mark.docker
 
@@ -95,3 +95,31 @@ def test_orchestrator_baseline_mode_uses_generic_feedback_and_exhausts_budget(tm
         assert record["bss"] == 0
         assert record["mode"] == "baseline"
         assert record["feedback_text"].startswith("Die Tests schlagen fehl")
+
+
+def test_orchestrator_parallel_workers_process_all_tasks(tmp_path):
+    """FR-908: mehrere Worker verarbeiten Aufgaben nebenlaeufig, ohne dass
+    Antworten zwischen Aufgaben vertauscht werden (KeyedFakeLLMClient waehlt
+    die Antwort anhand des entry_point im Prompt, nicht anhand der
+    Aufrufreihenfolge)."""
+    tasks = load_humaneval(task_ids=["HumanEval/0", "HumanEval/1"])
+    settings = load_settings()
+    settings.run.mode = "structural"
+    settings.run.max_iterations = 1
+    settings.run.parallel_workers = 2
+
+    llm = KeyedFakeLLMClient(
+        default_response="1. Do it.",
+        responses_by_keyword={task.entry_point: _correct_code_response(task) for task in tasks},
+    )
+    out_path = tmp_path / "run.jsonl"
+
+    run(settings, tasks, llm, out_path)
+
+    lines = out_path.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 2
+
+    results = {json.loads(line)["task_id"]: json.loads(line) for line in lines}
+    assert set(results) == {"HumanEval/0", "HumanEval/1"}
+    for record in results.values():
+        assert record["bss"] == 1

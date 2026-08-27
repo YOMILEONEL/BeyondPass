@@ -8,6 +8,7 @@ durch einen Fake ersetzen, ganz ohne echten API-Key oder Netzwerkzugriff
 
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import Protocol
@@ -50,23 +51,29 @@ class LLMClient(Protocol):
 
 @dataclass
 class CostTracker:
-    """Summiert Tokenverbrauch und geschaetzte Kosten ueber einen Run (NFR-04)."""
+    """Summiert Tokenverbrauch und geschaetzte Kosten ueber einen Run (NFR-04).
+
+    Thread-sicher, da bei paralleler Aufgabenverarbeitung (FR-908) mehrere
+    Worker denselben Tracker gemeinsam nutzen.
+    """
 
     model: str
     max_usd: float | None = None
     tokens_in: int = 0
     tokens_out: int = 0
     total_usd: float = field(default=0.0)
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
 
     def record(self, tokens_in: int, tokens_out: int) -> None:
-        self.tokens_in += tokens_in
-        self.tokens_out += tokens_out
-        self.total_usd += estimate_cost_usd(self.model, tokens_in, tokens_out)
+        with self._lock:
+            self.tokens_in += tokens_in
+            self.tokens_out += tokens_out
+            self.total_usd += estimate_cost_usd(self.model, tokens_in, tokens_out)
 
-        if self.max_usd is not None and self.total_usd > self.max_usd:
-            raise BudgetExceededError(
-                f"Budget von ${self.max_usd:.2f} ueberschritten (aktuell ${self.total_usd:.4f})"
-            )
+            if self.max_usd is not None and self.total_usd > self.max_usd:
+                raise BudgetExceededError(
+                    f"Budget von ${self.max_usd:.2f} ueberschritten (aktuell ${self.total_usd:.4f})"
+                )
 
 
 class AnthropicLLMClient:
