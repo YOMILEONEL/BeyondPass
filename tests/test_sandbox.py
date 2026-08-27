@@ -65,8 +65,7 @@ def test_milestone_1_correct_humaneval_solution():
     task = tasks[0]
 
     candidate_code = task.prompt + task.reference_solution
-    test_code = f"{task.test_code}\ncheck({task.entry_point})\n"
 
-    result = run_in_sandbox(candidate_code, test_code, timeout_s=10)
+    result = run_in_sandbox(candidate_code, task.test_code, timeout_s=10)
 
     assert result.bss == 1

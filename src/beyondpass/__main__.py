@@ -7,12 +7,13 @@ import sys
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Baut den Argument-Parser fuer `run` und `report` (Requirements Abschnitt 9.3)."""
     parser = argparse.ArgumentParser(prog="beyondpass")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     run_parser = subparsers.add_parser("run", help="Fuehrt einen Evaluationslauf aus")
     run_parser.add_argument("--mode", choices=["baseline", "structural"], default="structural")
-    run_parser.add_argument("--benchmark", default="humaneval")
+    run_parser.add_argument("--benchmark", choices=["humaneval", "mbpp"], default="humaneval")
     run_parser.add_argument("--limit", type=int, default=None)
     run_parser.add_argument("--model", default=None)
     run_parser.add_argument("--max-iterations", type=int, default=None)
@@ -32,10 +33,11 @@ def _run_command(args: argparse.Namespace) -> int:
     from beyondpass import orchestrator
     from beyondpass.agents.llm_client import AnthropicLLMClient, CostTracker
     from beyondpass.benchmarks.humaneval import load_humaneval
+    from beyondpass.benchmarks.mbpp import load_mbpp
     from beyondpass.config import load_settings
 
-    if args.benchmark != "humaneval":
-        raise NotImplementedError(f"Benchmark '{args.benchmark}' wird noch nicht unterstuetzt")
+    loaders = {"humaneval": load_humaneval, "mbpp": load_mbpp}
+    load_tasks = loaders[args.benchmark]
 
     settings = load_settings()
     settings.run.mode = args.mode
@@ -53,7 +55,7 @@ def _run_command(args: argparse.Namespace) -> int:
             f"LLM-Provider '{settings.llm.provider}' wird noch nicht unterstuetzt"
         )
 
-    tasks = load_humaneval(limit=settings.benchmark.limit, task_ids=settings.benchmark.task_ids)
+    tasks = load_tasks(limit=settings.benchmark.limit, task_ids=settings.benchmark.task_ids)
 
     cost_tracker = CostTracker(model=settings.llm.model, max_usd=settings.budget.max_usd)
     llm = AnthropicLLMClient(
@@ -109,6 +111,7 @@ def _report_command(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """CLI-Einstiegspunkt; `argv=None` liest von `sys.argv` (fuer Tests explizit uebergeben)."""
     parser = build_parser()
     args = parser.parse_args(argv)
 

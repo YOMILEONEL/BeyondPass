@@ -16,3 +16,11 @@ def test_load_respects_limit():
     tasks = load_humaneval(limit=3)
 
     assert len(tasks) == 3
+
+
+def test_test_code_is_self_executing():
+    """test_code muss ohne Zutun des Testers direkt ausfuehrbar sein
+    (Adapter-Muster, FR-105) -- der Tester haengt nichts mehr an."""
+    task = load_humaneval(task_ids=["HumanEval/0"])[0]
+
+    assert task.test_code.rstrip().endswith(f"check({task.entry_point})")

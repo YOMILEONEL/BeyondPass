@@ -1,4 +1,12 @@
-"""Tester-Agent: duenner Wrapper um die Docker-Sandbox aus AP1 (FR-401 ff.)."""
+"""Tester-Agent: duenner Wrapper um die Docker-Sandbox aus AP1 (FR-401 ff.).
+
+Bewusst benchmark-unabhaengig: `task.test_code` ist laut Adapter-Muster
+(FR-105) bereits vollstaendig selbst-ausfuehrbar (der jeweilige Loader,
+z. B. `benchmarks/humaneval.py`, haengt benchmark-spezifische Aufrufe wie
+`check(entry_point)` bereits selbst an). Der Tester haengt hier nichts mehr
+an, damit neue Benchmarks (z. B. MBPP) ohne Aenderung an dieser Datei
+funktionieren.
+"""
 
 from __future__ import annotations
 
@@ -13,5 +21,4 @@ def run_tester(
     memory_mb: int = 512,
 ) -> SandboxResult:
     """Fuehrt Kandidat + Tests der Aufgabe isoliert aus (FR-401, FR-402)."""
-    test_code = f"{task.test_code}\ncheck({task.entry_point})\n"
-    return run_in_sandbox(candidate_code, test_code, timeout_s=timeout_s, memory_mb=memory_mb)
+    return run_in_sandbox(candidate_code, task.test_code, timeout_s=timeout_s, memory_mb=memory_mb)

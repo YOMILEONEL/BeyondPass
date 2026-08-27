@@ -3,6 +3,11 @@
 Lädt den Datensatz über die `datasets`-Bibliothek (nutzt deren Standard-
 Cache unter ~/.cache/huggingface, erfüllt FR-104 ohne Zusatzcode) und
 bildet jede Zeile auf ein `Task`-Objekt ab.
+
+`Task.test_code` ist bereits vollstaendig selbst-ausfuehrbar (inkl. des
+abschliessenden `check(entry_point)`-Aufrufs) -- dieses HumanEval-spezifische
+Detail gehoert hierher (Adapter-Muster, FR-105) und nicht in den generischen
+Tester (`agents/tester.py`), der dadurch benchmark-unabhaengig bleibt.
 """
 
 from __future__ import annotations
@@ -17,12 +22,13 @@ DATASET_NAME = "openai/openai_humaneval"
 
 
 def _to_task(row: dict) -> Task:
+    entry_point = row["entry_point"]
     return Task(
         task_id=row["task_id"],
         prompt=row["prompt"],
-        test_code=row["test"],
+        test_code=f"{row['test']}\ncheck({entry_point})\n",
         reference_solution=row["canonical_solution"],
-        entry_point=row["entry_point"],
+        entry_point=entry_point,
     )
 
 

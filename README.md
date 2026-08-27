@@ -168,7 +168,7 @@ beyondpass/
 │   ├── models.py         # IterationResult data model                    done
 │   ├── orchestrator.py   # Iteration loop (baseline/structural, resume)  done
 │   ├── prompts.py        # Loads config/prompts/*.txt                    done
-│   ├── benchmarks/       # Task loaders (HumanEval; MBPP planned)        done
+│   ├── benchmarks/       # Task loaders: HumanEval, MBPP (adapter pattern) done
 │   ├── metrics/          # AST tokenizer + POS/PPS/PSS/PES               done
 │   ├── sandbox/          # Docker-based isolated execution               done
 │   ├── agents/           # Planner, Coder, Tester, Critic, LLM client    done
@@ -183,7 +183,7 @@ beyondpass/
 
 ## Tech Stack
 
-Python · Anthropic API (function calling) · Docker · `ast` · `pytest` · matplotlib
+Python · Anthropic API (function calling) · Docker · `ast` · `pytest` · `mypy` · matplotlib
 
 Deviates slightly from the original tech-stack plan: aggregation uses the standard library (`statistics`) instead of `pandas` - one fewer dependency, same result, easier to unit-test.
 
@@ -210,7 +210,7 @@ These are inherited directly from the thesis and stated openly rather than gloss
 
 - **Structural closeness is not semantic equivalence.** Two very different programs can compute the same function; the metrics only measure similarity to one specific reference, not functional correctness beyond the given tests.
 - **A canonical reference is only one of many valid solutions.** A low structural score does not necessarily mean "worse code" - only "different from this particular reference."
-- **Evaluated on a single domain and benchmark** (Python functions via HumanEval); generalization to other domains or longer programs is untested.
+- **Evaluated on a single domain and benchmark so far** (Python functions via HumanEval); an MBPP adapter exists (`--benchmark mbpp`) to check generalization to a second benchmark, but no evaluation run has actually used it yet - both are blocked on a paid API key.
 - **A clean negative result is a valid outcome.** If structural feedback shows no measurable advantage over plain pass/fail feedback, that is reported as such - not hidden.
 
 ## Relation to the Thesis
@@ -231,7 +231,7 @@ Thesis code this project builds on:
 
 ## License
 
-MIT - see [LICENSE](LICENSE) for details. Benchmark datasets (HumanEval) retain their original licenses; see their respective sources.
+MIT - see [LICENSE](LICENSE) for details. Benchmark datasets (HumanEval, MBPP) retain their original licenses; see their respective sources.
 
 ---
 
