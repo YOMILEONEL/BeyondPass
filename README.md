@@ -34,14 +34,14 @@ It is a direct continuation of my Bachelor thesis, [*"Beyond Accuracy: Measuring
 
 ## Project Status
 
-The system is being built in four work packages. **Foundation and metrics are done and tested; the agent loop is next.**
+The system is being built in four work packages. **Foundation, metrics, and the agent loop are done and tested; evaluation is next.**
 
 - [x] **Foundation** - typed config, HumanEval loader, Docker sandbox (isolated, no network, resource-limited) for candidate execution
 - [x] **Metrics** - AST tokenizer and the four POS/PPS/PSS/PES scores, verified to reproduce the exact worked example from the thesis (Ch. 4.2)
-- [ ] **Agents & feedback loop** - Planner/Coder/Tester/Critic agents, diagnosis logic, orchestrator (baseline vs. structural modes)
+- [x] **Agents & feedback loop** - Planner/Coder/Tester/Critic agents, diagnosis logic, orchestrator (baseline vs. structural modes), no-reference-leak enforced by test
 - [ ] **Evaluation & results** - full HumanEval runs across seeds, comparison report, results filled into this README
 
-34 tests currently pass (`pytest tests/`). The `run`/`report` CLI commands shown under [Usage](#usage) describe the target interface and are not implemented yet - see [Project Structure](#project-structure) for what exists today versus what's planned.
+56 tests currently pass (`pytest tests/`), all running against a mocked LLM client - no API key is required to run the test suite. The `run` CLI command needs a real `ANTHROPIC_API_KEY` (see [Configuration](#configuration)); `report` is not implemented yet - see [Project Structure](#project-structure) for what exists today versus what's planned.
 
 ## The Problem
 
@@ -103,7 +103,7 @@ The project runs a controlled comparison: the same model, the same task subset, 
 
 ## Key Design Constraints
 
-- The **Planner and Coder agents never see the reference solution** - only the Critic does, purely for comparison purposes. This will be enforced by an automated test, not just by convention.
+- The **Planner and Coder agents never see the reference solution** - only the Critic does, purely for comparison purposes. This is enforced by an automated test, not just by convention.
 - All LLM-generated code runs in an **isolated, network-disabled Docker sandbox** with resource limits before it is ever evaluated.
 - Following a finding from the original thesis (a program can pass all tests while ignoring its input entirely), solutions that pass without meaningfully using their input are **flagged separately** as potential trivial/false positives rather than silently counted as successes.
 
@@ -163,16 +163,19 @@ python -m beyondpass report \
 ```
 beyondpass/
 ├── src/beyondpass/
-│   ├── config.py         # Typed, validated settings (Pydantic)          ✓
-│   ├── benchmarks/       # Task loaders (HumanEval; MBPP planned)        ✓
-│   ├── metrics/          # AST tokenizer + POS/PPS/PSS/PES               ✓
-│   ├── sandbox/          # Docker-based isolated execution               ✓
-│   ├── agents/           # Planner, Coder, Tester, Critic                planned
-│   ├── feedback/         # Diagnosis logic and feedback templates        planned
-│   ├── orchestrator.py   # Iteration loop                                planned
-│   └── reporting/        # Aggregation and plots                         planned
+│   ├── config.py         # Typed, validated settings (Pydantic)          done
+│   ├── models.py         # IterationResult data model                    done
+│   ├── orchestrator.py   # Iteration loop (baseline/structural, resume)  done
+│   ├── prompts.py        # Loads config/prompts/*.txt                    done
+│   ├── benchmarks/       # Task loaders (HumanEval; MBPP planned)        done
+│   ├── metrics/          # AST tokenizer + POS/PPS/PSS/PES               done
+│   ├── sandbox/          # Docker-based isolated execution               done
+│   ├── agents/           # Planner, Coder, Tester, Critic, LLM client    done
+│   ├── feedback/         # Diagnosis logic, feedback templates, trivial  done
+│   └── reporting/        # Aggregation and plots                        planned
 ├── tests/
 ├── config/
+│   └── prompts/          # Planner/Coder prompt templates (NFR-07)
 ├── docs/                 # Requirements spec + thesis PDF
 └── results/
 ```
@@ -191,8 +194,11 @@ Notably includes:
 - **Thesis-consistency test** - verifies the ported metrics reproduce the exact example values from the thesis (POS = 0.75, PPS = PSS = PES = 0.25 on the running example)
 - **Metric-invariance property test** - verifies POS ≥ max(PPS, PSS, PES) holds for arbitrary token sequences
 - **Sandbox tests** - timeout handling, no network access, exceptions don't crash the host, correct solutions pass
+- **No-reference-leak test** - asserts the reference solution never appears in the Planner or Coder prompts (INV-1)
+- **Diagnosis and trivial-solution tests** - each feedback category and the trivial/suspicious flags are triggered by a constructed example
+- **Orchestrator mini-run test** - a full baseline/structural loop over 2 HumanEval tasks with a scripted fake LLM client
 
-A **no-reference-leak test** (asserting the reference solution never appears in Planner/Coder prompts) is planned alongside the agent implementation.
+None of the tests call a real LLM API - a `FakeLLMClient` with scripted responses stands in for the model, so the full suite runs without any API key. Tests that exercise the real sandbox require a running Docker daemon and are skipped automatically otherwise.
 
 ## Limitations
 

@@ -1,0 +1,6 @@
+Dein vorheriger Loesungsversuch war nicht korrekt.
+
+Aufgabe: {prompt}
+Dein bisheriger Code: {previous_code}
+Rueckmeldung: {feedback_text}
+Korrigiere den Code. Gib ausschliesslich Code zurueck, ohne Erklaerung.

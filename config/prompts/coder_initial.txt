@@ -1,0 +1,4 @@
+Implementiere die folgende Funktion in Python. Halte dich an die vorgegebene Signatur. Gib ausschliesslich Code zurueck, ohne Erklaerung.
+
+Aufgabe: {prompt}
+Loesungsplan: {plan}

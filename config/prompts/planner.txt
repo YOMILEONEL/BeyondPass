@@ -1,0 +1,3 @@
+Du erhaeltst eine Programmieraufgabe. Zerlege sie in nummerierte Loesungsschritte in natuerlicher Sprache. Schreibe keinen Code. Maximal 5 Schritte.
+
+Aufgabe: {prompt}

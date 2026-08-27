@@ -18,3 +18,14 @@ class Task:
     test_code: str
     reference_solution: str
     entry_point: str
+
+    @property
+    def reference_program(self) -> str:
+        """Vollstaendiges, eigenstaendig parsbares Referenzprogramm.
+
+        `reference_solution` (HumanEval's `canonical_solution`) ist nur der
+        eingerueckte Funktionskoerper und fuer sich genommen kein gueltiges
+        Python. Fuer den AST-Tokenizer (AP2) wird die Signatur aus `prompt`
+        vorangestellt.
+        """
+        return self.prompt + self.reference_solution
