@@ -14,6 +14,8 @@ from beyondpass.config import DiagnosisConfig
 
 
 class DiagnosisCategory(str, Enum):
+    """Eine der acht Kategorien der Diagnose-Matrix (Requirements Abschnitt 6.7)."""
+
     SUCCESS = "SUCCESS"
     SUSPICIOUS_PASS = "SUSPICIOUS_PASS"
     SYNTAX_ERROR = "SYNTAX_ERROR"
@@ -33,6 +35,12 @@ def diagnose(
     syntax_error: bool,
     thresholds: DiagnosisConfig,
 ) -> DiagnosisCategory:
+    """Leitet aus BSS und den vier Metriken die Diagnose-Kategorie ab (FR-702).
+
+    Bei `bss == 1` wird nur zwischen SUCCESS und SUSPICIOUS_PASS
+    unterschieden; bei `bss == 0` wird die Fehlschlag-Reihenfolge aus dem
+    Modul-Docstring geprueft, erste zutreffende Kategorie gewinnt.
+    """
     if bss == 1:
         if pos < thresholds.suspicious_pos:
             return DiagnosisCategory.SUSPICIOUS_PASS

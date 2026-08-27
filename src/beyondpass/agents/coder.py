@@ -21,6 +21,8 @@ _CODE_FENCE_RE = re.compile(r"```(?:python)?\s*\n(.*?)```", re.DOTALL)
 
 @dataclass
 class CoderAttempt:
+    """Ein bisheriger Loesungsversuch des Coders inkl. erhaltenem Feedback (FR-302)."""
+
     code: str
     feedback_text: str
 

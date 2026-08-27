@@ -17,5 +17,7 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Lint
         run: ruff check src/ tests/
+      - name: Type check
+        run: mypy src/beyondpass
       - name: Test (ohne Docker-Sandbox-Tests)
         run: pytest tests/ -v -m "not docker"

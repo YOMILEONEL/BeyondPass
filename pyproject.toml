@@ -23,6 +23,7 @@ dev = [
     "pytest>=8.0",
     "ruff>=0.6",
     "mypy>=1.10",
+    "types-PyYAML>=6.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -39,3 +40,11 @@ select = ["E", "F", "I", "UP"]
 markers = [
     "docker: tests that require a running Docker daemon",
 ]
+
+[tool.mypy]
+python_version = "3.10"
+
+# `docker` and `datasets` ship no type stubs / py.typed marker upstream.
+[[tool.mypy.overrides]]
+module = ["docker.*", "datasets.*"]
+ignore_missing_imports = true

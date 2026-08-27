@@ -9,4 +9,5 @@ _PROMPTS_DIR = Path(__file__).resolve().parents[2] / "config" / "prompts"
 
 
 def load_template(name: str) -> str:
+    """Laedt eine Template-Datei aus config/prompts/ als Rohtext."""
     return (_PROMPTS_DIR / name).read_text(encoding="utf-8")

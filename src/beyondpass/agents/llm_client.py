@@ -40,13 +40,20 @@ class BudgetExceededError(RuntimeError):
 
 @dataclass
 class LLMResponse:
+    """Antwort eines LLM-Aufrufs samt Tokenverbrauch fuer die Kostenzaehlung."""
+
     text: str
     tokens_in: int
     tokens_out: int
 
 
 class LLMClient(Protocol):
-    def complete(self, system: str, user: str) -> LLMResponse: ...
+    """Schnittstelle, von der Planner und Coder abhaengen (nie von einer
+    konkreten SDK-Klasse) -- ermoeglicht Fakes in Tests ohne API-Key."""
+
+    def complete(self, system: str, user: str) -> LLMResponse:
+        """Sendet System-/User-Prompt und liefert Text plus Tokenverbrauch."""
+        ...
 
 
 @dataclass
@@ -65,6 +72,7 @@ class CostTracker:
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
 
     def record(self, tokens_in: int, tokens_out: int) -> None:
+        """Verbucht einen Aufruf und wirft `BudgetExceededError` bei Ueberschreitung."""
         with self._lock:
             self.tokens_in += tokens_in
             self.tokens_out += tokens_out
@@ -101,17 +109,23 @@ class AnthropicLLMClient:
         self._cost_tracker = cost_tracker
 
     def complete(self, system: str, user: str) -> LLMResponse:
+        """Ruft die Anthropic-API auf, mit exponentiellem Backoff (FR-907)."""
         import anthropic
 
         last_error: Exception | None = None
         for attempt in range(self._max_retries + 1):
             try:
-                response = self._client.messages.create(
+                # mypy scheitert an der stark ueberladenen Signatur von
+                # `.create()` (der Literal-Dict fuer `messages` matcht
+                # keinen der ~20 stream/tool-Overloads exakt), obwohl der
+                # Aufruf zur Laufzeit korrekt ist.
+                response = self._client.messages.create(  # type: ignore[call-overload]
                     model=self._model,
                     max_tokens=self._max_tokens,
                     temperature=self._temperature,
                     system=system,
                     messages=[{"role": "user", "content": user}],
+                    stream=False,
                 )
                 text = "".join(block.text for block in response.content if block.type == "text")
                 tokens_in = response.usage.input_tokens

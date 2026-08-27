@@ -18,6 +18,8 @@ from beyondpass.metrics import MetricResult, all_metrics
 
 @dataclass
 class CriticResult:
+    """Ergebnis einer Critic-Bewertung: Metriken, Diagnose-Kategorie und Flags."""
+
     metrics: MetricResult
     diagnosis: DiagnosisCategory
     flags: list[str] = field(default_factory=list)

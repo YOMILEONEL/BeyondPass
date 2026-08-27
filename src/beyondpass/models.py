@@ -8,6 +8,11 @@ from dataclasses import asdict, dataclass, field
 
 @dataclass
 class IterationResult:
+    """Vollstaendiges Ergebnis einer Coder->Tester->Critic-Iteration.
+
+    Eine Zeile pro Iteration wird als JSONL geschrieben (FR-1001).
+    """
+
     task_id: str
     iteration: int
     mode: str
@@ -29,4 +34,5 @@ class IterationResult:
     duration_s: float = 0.0
 
     def to_json_line(self) -> str:
+        """Serialisiert dieses Ergebnis als einzelne JSON-Zeile (ohne Zeilenumbruch)."""
         return json.dumps(asdict(self), ensure_ascii=False)

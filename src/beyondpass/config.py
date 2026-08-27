@@ -15,6 +15,8 @@ DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "default.
 
 
 class RunConfig(BaseModel):
+    """Steuert Modus, Seed und Iterationsbudget eines Runs (Abschnitt 13)."""
+
     mode: str = "structural"
     seed: int = 0
     max_iterations: int = 5
@@ -22,12 +24,16 @@ class RunConfig(BaseModel):
 
 
 class BenchmarkConfig(BaseModel):
+    """Waehlt Benchmark und Aufgaben-Subset aus (FR-103)."""
+
     name: str = "humaneval"
     limit: int | None = 50
     task_ids: list[str] | None = None
 
 
 class LLMConfig(BaseModel):
+    """Modell, Sampling-Parameter und Retry-Verhalten des LLM-Clients."""
+
     provider: str = "anthropic"
     model: str = "claude-haiku-4-5"
     temperature: float = 0.7
@@ -36,12 +42,16 @@ class LLMConfig(BaseModel):
 
 
 class SandboxConfig(BaseModel):
+    """Ressourcenlimits und Timeout der Docker-Sandbox (FR-401 bis FR-407)."""
+
     timeout_s: int = 10
     memory_mb: int = 512
     network: bool = False
 
 
 class DiagnosisConfig(BaseModel):
+    """Schwellenwerte der Diagnose-Matrix, konfigurierbar statt hartkodiert (FR-706)."""
+
     pos_low: float = 0.4
     pos_high: float = 0.6
     pps_low: float = 0.4
@@ -51,10 +61,14 @@ class DiagnosisConfig(BaseModel):
 
 
 class BudgetConfig(BaseModel):
+    """Obergrenze der geschaetzten API-Kosten eines Runs (NFR-04)."""
+
     max_usd: float = 10.0
 
 
 class OutputConfig(BaseModel):
+    """Ausgabeverzeichnis und Log-Level."""
+
     results_dir: str = "results/"
     log_level: str = "INFO"
 

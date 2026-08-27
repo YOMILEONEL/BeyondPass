@@ -16,6 +16,8 @@ from beyondpass.metrics.tokenizer import tokenize
 
 @dataclass
 class MetricResult:
+    """Die vier strukturellen Metriken fuer ein Kandidat/Referenz-Paar."""
+
     pos: float
     pps: float
     pss: float
