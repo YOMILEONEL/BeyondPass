@@ -1,4 +1,4 @@
-from structcoder.benchmarks.humaneval import load_humaneval
+from beyondpass.benchmarks.humaneval import load_humaneval
 
 
 def test_load_single_task_by_id():

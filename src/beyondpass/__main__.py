@@ -1,7 +1,7 @@
 """CLI-Einstiegspunkt (Requirements Abschnitt 9.3).
 
 `run` und `report` werden in AP3/AP4 implementiert; dieser Stub stellt nur
-die Kommandostruktur bereit, damit `python -m structcoder --help` funktioniert.
+die Kommandostruktur bereit, damit `python -m beyondpass --help` funktioniert.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import sys
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="structcoder")
+    parser = argparse.ArgumentParser(prog="beyondpass")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     run_parser = subparsers.add_parser("run", help="Fuehrt einen Evaluationslauf aus")

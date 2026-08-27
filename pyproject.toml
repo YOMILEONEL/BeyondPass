@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "structcoder"
+name = "beyondpass"
 version = "0.1.0"
 description = "Multi-Agent-Code-Synthese mit strukturgesteuertem Feedback-Loop"
 readme = "README.md"

@@ -4,7 +4,7 @@ import random
 
 import pytest
 
-from structcoder.metrics.scores import (
+from beyondpass.metrics.scores import (
     program_edit_score,
     program_operation_score,
     program_position_score,

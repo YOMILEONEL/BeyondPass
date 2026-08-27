@@ -1,4 +1,4 @@
-from structcoder.config import load_settings
+from beyondpass.config import load_settings
 
 
 def test_default_config_loads_expected_values():

@@ -1,6 +1,6 @@
 import pytest
 
-from structcoder.sandbox.docker_runner import is_docker_available
+from beyondpass.sandbox.docker_runner import is_docker_available
 
 _DOCKER_AVAILABLE = is_docker_available()
 

@@ -1,6 +1,6 @@
 """T-1: Tokenizer-Tests (Determinismus, alpha-Aequivalenz, SyntaxError)."""
 
-from structcoder.metrics.tokenizer import tokenize
+from beyondpass.metrics.tokenizer import tokenize
 
 EXAMPLE_SOURCE = """
 def solve(lst):

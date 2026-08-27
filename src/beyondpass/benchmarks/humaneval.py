@@ -11,7 +11,7 @@ from collections.abc import Iterable
 
 from datasets import load_dataset
 
-from structcoder.benchmarks.base import Task
+from beyondpass.benchmarks.base import Task
 
 DATASET_NAME = "openai/openai_humaneval"
 

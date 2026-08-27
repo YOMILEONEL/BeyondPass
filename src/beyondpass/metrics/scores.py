@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 
-from structcoder.metrics.tokenizer import tokenize
+from beyondpass.metrics.tokenizer import tokenize
 
 
 @dataclass

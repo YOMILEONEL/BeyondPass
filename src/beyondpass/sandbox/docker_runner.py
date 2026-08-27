@@ -20,7 +20,7 @@ from pathlib import Path
 import docker
 from docker.errors import DockerException, ImageNotFound, NotFound
 
-IMAGE_TAG = "structcoder-sandbox:latest"
+IMAGE_TAG = "beyondpass-sandbox:latest"
 _DOCKERFILE_DIR = Path(__file__).resolve().parent
 _CONTAINER_WORKDIR = "/sandbox"
 _PIDS_LIMIT = 64
@@ -74,7 +74,7 @@ def run_in_sandbox(
             bss=0, tests_passed=0, tests_total=1, error_message=f"Docker nicht erreichbar: {exc}"
         )
 
-    with tempfile.TemporaryDirectory(prefix="structcoder-sandbox-") as tmp_dir:
+    with tempfile.TemporaryDirectory(prefix="beyondpass-sandbox-") as tmp_dir:
         script_path = Path(tmp_dir) / "script.py"
         script_path.write_text(script, encoding="utf-8")
 
@@ -91,7 +91,7 @@ def run_in_sandbox(
                 mem_limit=f"{memory_mb}m",
                 pids_limit=_PIDS_LIMIT,
                 detach=True,
-                name=f"structcoder-{uuid.uuid4().hex[:12]}",
+                name=f"beyondpass-{uuid.uuid4().hex[:12]}",
             )
 
             try:

@@ -3,7 +3,7 @@
 Eigenstaendig importierbar, ohne Abhaengigkeit zum Agenten-Code (FR-608).
 """
 
-from structcoder.metrics.scores import (
+from beyondpass.metrics.scores import (
     MetricResult,
     all_metrics,
     levenshtein_distance,
@@ -13,7 +13,7 @@ from structcoder.metrics.scores import (
     program_position_score,
     program_sequence_score,
 )
-from structcoder.metrics.tokenizer import tokenize
+from beyondpass.metrics.tokenizer import tokenize
 
 __all__ = [
     "tokenize",

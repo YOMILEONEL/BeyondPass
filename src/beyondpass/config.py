@@ -1,5 +1,5 @@
 """Typisierte, validierte Konfiguration (NFR-07): lädt config/default.yaml
-und erlaubt Overrides über Umgebungsvariablen mit dem Prefix STRUCTCODER_.
+und erlaubt Overrides über Umgebungsvariablen mit dem Prefix BEYONDPASS_.
 """
 
 from __future__ import annotations
@@ -62,7 +62,7 @@ class OutputConfig(BaseModel):
 class Settings(BaseSettings):
     """Vollständige Konfiguration eines Runs (siehe Requirements Abschnitt 13)."""
 
-    model_config = SettingsConfigDict(env_prefix="STRUCTCODER_", env_nested_delimiter="__")
+    model_config = SettingsConfigDict(env_prefix="BEYONDPASS_", env_nested_delimiter="__")
 
     run: RunConfig = RunConfig()
     benchmark: BenchmarkConfig = BenchmarkConfig()
@@ -76,11 +76,11 @@ class Settings(BaseSettings):
 def load_settings(config_path: Path | str | None = None) -> Settings:
     """Lädt die Konfiguration aus einer YAML-Datei (Default: config/default.yaml).
 
-    Umgebungsvariablen mit Prefix STRUCTCODER_ überschreiben einzelne Werte,
-    z. B. STRUCTCODER_RUN__SEED=1.
+    Umgebungsvariablen mit Prefix BEYONDPASS_ überschreiben einzelne Werte,
+    z. B. BEYONDPASS_RUN__SEED=1.
     """
     path = Path(config_path) if config_path else Path(
-        os.environ.get("STRUCTCODER_CONFIG_PATH", DEFAULT_CONFIG_PATH)
+        os.environ.get("BEYONDPASS_CONFIG_PATH", DEFAULT_CONFIG_PATH)
     )
     data = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
     return Settings(**data)

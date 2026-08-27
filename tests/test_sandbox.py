@@ -6,7 +6,7 @@ Loesung wird geladen, in der Sandbox getestet und liefert BSS = 1.
 
 import pytest
 
-from structcoder.sandbox.docker_runner import run_in_sandbox
+from beyondpass.sandbox.docker_runner import run_in_sandbox
 
 pytestmark = pytest.mark.docker
 
@@ -58,7 +58,7 @@ def test_correct_solution_passes():
 
 def test_milestone_1_correct_humaneval_solution():
     """M1: HumanEval/0 mit der kanonischen Loesung muss BSS = 1 liefern."""
-    from structcoder.benchmarks.humaneval import load_humaneval
+    from beyondpass.benchmarks.humaneval import load_humaneval
 
     tasks = load_humaneval(task_ids=["HumanEval/0"])
     assert len(tasks) == 1
