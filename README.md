@@ -8,12 +8,13 @@
 
 BeyondPass is a multi-agent system that solves programming tasks through iterative code generation — but instead of relying on a plain pass/fail signal, it diagnoses *why* a candidate solution is wrong using structural program metrics, and turns that diagnosis into targeted feedback for the next attempt.
 
-It is a direct continuation of my Bachelor thesis, [*"Beyond Accuracy: Measuring Intelligence in Programming by Example"*](docs/thesis_link.md) (TU Clausthal, 2026), which introduced four token-based metrics to compare a generated program against a reference program rather than only comparing outputs. This project asks the natural next question the thesis leaves open: **can those same metrics be used not just to measure a solution, but to actively guide an agent toward a better one?**
+It is a direct continuation of my Bachelor thesis, [*"Beyond Accuracy: Measuring Intelligence in Programming by Example"*](docs/Thesis.pdf) (TU Clausthal, 2026), which introduced four token-based metrics to compare a generated program against a reference program rather than only comparing outputs. This project asks the natural next question the thesis leaves open: **can those same metrics be used not just to measure a solution, but to actively guide an agent toward a better one?**
 
 ---
 
 ## Table of Contents
 
+- [Project Status](#project-status)
 - [The Problem](#the-problem)
 - [The Approach](#the-approach)
 - [Architecture](#architecture)
@@ -30,6 +31,17 @@ It is a direct continuation of my Bachelor thesis, [*"Beyond Accuracy: Measuring
 - [License](#license)
 
 ---
+
+## Project Status
+
+The system is being built in four work packages. **Foundation and metrics are done and tested; the agent loop is next.**
+
+- [x] **Foundation** — typed config, HumanEval loader, Docker sandbox (isolated, no network, resource-limited) for candidate execution
+- [x] **Metrics** — AST tokenizer and the four POS/PPS/PSS/PES scores, verified to reproduce the exact worked example from the thesis (Ch. 4.2)
+- [ ] **Agents & feedback loop** — Planner/Coder/Tester/Critic agents, diagnosis logic, orchestrator (baseline vs. structural modes)
+- [ ] **Evaluation & results** — full HumanEval runs across seeds, comparison report, results filled into this README
+
+34 tests currently pass (`pytest tests/`). The `run`/`report` CLI commands shown under [Usage](#usage) describe the target interface and are not implemented yet — see [Project Structure](#project-structure) for what exists today versus what's planned.
 
 ## The Problem
 
@@ -91,7 +103,7 @@ The project runs a controlled comparison: the same model, the same task subset, 
 
 ## Key Design Constraints
 
-- The **Planner and Coder agents never see the reference solution** — only the Critic does, purely for comparison purposes. This is enforced by an automated test, not just by convention.
+- The **Planner and Coder agents never see the reference solution** — only the Critic does, purely for comparison purposes. This will be enforced by an automated test, not just by convention.
 - All LLM-generated code runs in an **isolated, network-disabled Docker sandbox** with resource limits before it is ever evaluated.
 - Following a finding from the original thesis (a program can pass all tests while ignoring its input entirely), solutions that pass without meaningfully using their input are **flagged separately** as potential trivial/false positives rather than silently counted as successes.
 
@@ -106,9 +118,9 @@ The project runs a controlled comparison: the same model, the same task subset, 
 ### Installation
 
 ```bash
-git clone https://github.com/YOMILEONEL/beyondpass.git
-cd beyondpass
-pip install -e .
+git clone https://github.com/YOMILEONEL/BeyondPass.git
+cd BeyondPass
+pip install -e ".[dev]"
 ```
 
 ### Configuration
@@ -151,15 +163,17 @@ python -m beyondpass report \
 ```
 beyondpass/
 ├── src/beyondpass/
-│   ├── benchmarks/       # Task loaders (HumanEval, MBPP)
-│   ├── metrics/          # AST tokenizer + POS/PPS/PSS/PES
-│   ├── agents/           # Planner, Coder, Tester, Critic
-│   ├── sandbox/          # Docker-based safe execution
-│   ├── feedback/         # Diagnosis logic and feedback templates
-│   ├── orchestrator.py   # Iteration loop
-│   └── reporting/        # Aggregation and plots
+│   ├── config.py         # Typed, validated settings (Pydantic)          ✓
+│   ├── benchmarks/       # Task loaders (HumanEval; MBPP planned)        ✓
+│   ├── metrics/          # AST tokenizer + POS/PPS/PSS/PES               ✓
+│   ├── sandbox/          # Docker-based isolated execution               ✓
+│   ├── agents/           # Planner, Coder, Tester, Critic                planned
+│   ├── feedback/         # Diagnosis logic and feedback templates        planned
+│   ├── orchestrator.py   # Iteration loop                                planned
+│   └── reporting/        # Aggregation and plots                         planned
 ├── tests/
 ├── config/
+├── docs/                 # Requirements spec + thesis PDF
 └── results/
 ```
 
@@ -175,8 +189,10 @@ pytest tests/
 
 Notably includes:
 - **Thesis-consistency test** — verifies the ported metrics reproduce the exact example values from the thesis (POS = 0.75, PPS = PSS = PES = 0.25 on the running example)
-- **No-reference-leak test** — asserts the reference solution never appears in Planner/Coder prompts
 - **Metric-invariance property test** — verifies POS ≥ max(PPS, PSS, PES) holds for arbitrary token sequences
+- **Sandbox tests** — timeout handling, no network access, exceptions don't crash the host, correct solutions pass
+
+A **no-reference-leak test** (asserting the reference solution never appears in Planner/Coder prompts) is planned alongside the agent implementation.
 
 ## Limitations
 
