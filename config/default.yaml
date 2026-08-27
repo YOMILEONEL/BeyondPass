@@ -1,0 +1,37 @@
+run:
+  mode: structural          # baseline | structural
+  seed: 0
+  max_iterations: 5
+  parallel_workers: 1
+
+benchmark:
+  name: humaneval
+  limit: 50
+  task_ids: null            # oder explizite Liste
+
+llm:
+  provider: anthropic
+  model: claude-haiku-4-5
+  temperature: 0.7
+  max_tokens: 2000
+  max_retries: 3
+
+sandbox:
+  timeout_s: 10
+  memory_mb: 512
+  network: false
+
+diagnosis:
+  pos_low: 0.4
+  pos_high: 0.6
+  pps_low: 0.4
+  pss_low: 0.4
+  pes_near_miss: 0.7
+  suspicious_pos: 0.3
+
+budget:
+  max_usd: 10.0
+
+output:
+  results_dir: results/
+  log_level: INFO
