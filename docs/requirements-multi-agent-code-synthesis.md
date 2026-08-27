@@ -42,7 +42,7 @@ Diese Metriken (POS, PPS, PSS, PES) stammen aus der Bachelorarbeit *„Beyond Ac
 
 ### 1.2 Motivation
 
-Ein binäres Erfolgssignal (BSS) sagt einem Coder-Agenten lediglich, *dass* seine Lösung falsch ist — nicht *warum*. Die strukturellen Metriken erlauben eine differenzierte Diagnose:
+Ein binäres Erfolgssignal (BSS) sagt einem Coder-Agenten lediglich, *dass* seine Lösung falsch ist - nicht *warum*. Die strukturellen Metriken erlauben eine differenzierte Diagnose:
 
 - **Hoher POS, niedriger PPS** → richtige Operationen, falsche Anordnung
 - **Niedriger POS** → grundsätzlich falscher Lösungsansatz
@@ -113,11 +113,11 @@ Diese Diagnose wird in gezieltes Feedback übersetzt, das der Coder-Agent im nä
 
 | Begriff | Bedeutung |
 |---|---|
-| **BSS** | Binary Success Signal — 1 wenn alle Testfälle bestanden, sonst 0 |
-| **POS** | Program Operation Score — Multiset-Überlappung der Tokens (Präsenz) |
-| **PPS** | Program Position Score — positionsweise Übereinstimmung |
-| **PSS** | Program Sequence Score — längster gemeinsamer zusammenhängender Block |
-| **PES** | Program Edit Score — 1 − (normalisierte Levenshtein-Distanz) |
+| **BSS** | Binary Success Signal - 1 wenn alle Testfälle bestanden, sonst 0 |
+| **POS** | Program Operation Score - Multiset-Überlappung der Tokens (Präsenz) |
+| **PPS** | Program Position Score - positionsweise Übereinstimmung |
+| **PSS** | Program Sequence Score - längster gemeinsamer zusammenhängender Block |
+| **PES** | Program Edit Score - 1 − (normalisierte Levenshtein-Distanz) |
 | **Kandidat** | Vom Coder-Agent generierter Code für eine Aufgabe |
 | **Referenz** | Kanonische Musterlösung des Benchmarks |
 | **Iteration** | Ein Durchlauf Coder → Tester → Critic → Feedback |
@@ -296,14 +296,14 @@ def solve(lst):
 
 | Kategorie | Bedingung | Feedback-Kern |
 |---|---|---|
-| `SUCCESS` | BSS = 1 | — (Abbruch) |
+| `SUCCESS` | BSS = 1 | - (Abbruch) |
 | `SYNTAX_ERROR` | Code nicht parsbar | „Der Code ist syntaktisch ungültig: {error}" |
 | `WRONG_APPROACH` | BSS = 0 **und** POS < 0.4 | „Der grundlegende Lösungsansatz scheint nicht zu passen. Überdenke die Strategie neu, statt Details zu korrigieren." |
 | `WRONG_ORDER` | BSS = 0 **und** POS ≥ 0.6 **und** PPS < 0.4 | „Die verwendeten Operationen wirken passend, aber ihre Reihenfolge bzw. Verschachtelung stimmt nicht. Prüfe die Abfolge der Schritte." |
 | `FRAGMENTED` | BSS = 0 **und** POS ≥ 0.6 **und** PSS < 0.4 **und** PPS ≥ 0.4 | „Zusammengehörige Teilschritte sind auseinandergerissen. Prüfe, ob Operationen zusammengehören, die du getrennt hast." |
-| `NEAR_MISS` | BSS = 0 **und** PES ≥ 0.7 | „Die Lösung ist strukturell fast korrekt — es fehlt vermutlich ein kleines Detail. Prüfe Randfälle und einzelne Operatoren." |
+| `NEAR_MISS` | BSS = 0 **und** PES ≥ 0.7 | „Die Lösung ist strukturell fast korrekt - es fehlt vermutlich ein kleines Detail. Prüfe Randfälle und einzelne Operatoren." |
 | `GENERIC_FAIL` | BSS = 0, keine andere Kategorie greift | „Die Tests schlagen fehl: {error}" |
-| `SUSPICIOUS_PASS` | BSS = 1 **und** POS < 0.3 | — (kein Feedback, nur Logging-Flag) |
+| `SUSPICIOUS_PASS` | BSS = 1 **und** POS < 0.3 | - (kein Feedback, nur Logging-Flag) |
 
 > **Hinweis zur Reihenfolge:** Die Kategorien werden in der Reihenfolge `SYNTAX_ERROR → WRONG_APPROACH → WRONG_ORDER → FRAGMENTED → NEAR_MISS → GENERIC_FAIL` geprüft; die erste zutreffende gewinnt.
 
@@ -442,7 +442,7 @@ def run_in_sandbox(
     memory_mb: int = 512,
 ) -> SandboxResult:
     """Führt Kandidat + Tests isoliert aus.
-    Wirft niemals — Fehler landen in SandboxResult.error."""
+    Wirft niemals - Fehler landen in SandboxResult.error."""
 ```
 
 ### 9.3 CLI
@@ -483,7 +483,7 @@ python -m structcoder report \
 | Modell | identisch in beiden Bedingungen |
 | Temperatur | identisch, > 0 (sonst sind Wiederholungen sinnlos) |
 
-> **Wichtig:** Beide Bedingungen müssen dasselbe Aufgaben-Subset, Modell und Iterationsbudget verwenden. Sonst ist die Differenz nicht dem Feedback zuzuschreiben — dieselbe Compute-Matching-Kritik, die in der Thesis (Sesterhenn et al.) zitiert wird.
+> **Wichtig:** Beide Bedingungen müssen dasselbe Aufgaben-Subset, Modell und Iterationsbudget verwenden. Sonst ist die Differenz nicht dem Feedback zuzuschreiben - dieselbe Compute-Matching-Kritik, die in der Thesis (Sesterhenn et al.) zitiert wird.
 
 ### 10.2 Primäre Metriken
 
@@ -504,12 +504,12 @@ python -m structcoder report \
 
 | Bedingung | Solve Rate | Ø Iter. | POS (gelöst) | PPS (gelöst) | PSS (gelöst) | PES (gelöst) |
 |---|---|---|---|---|---|---|
-| Baseline, Seed 0–2 | — | — | — | — | — | — |
-| Structural, Seed 0–2 | — | — | — | — | — | — |
+| Baseline, Seed 0-2 | - | - | - | - | - | - |
+| Structural, Seed 0-2 | - | - | - | - | - | - |
 
 ### 10.5 Ehrliche Ergebnisinterpretation
 
-Das Projekt ist **auch dann erfolgreich**, wenn strukturgesteuertes Feedback keinen Vorteil bringt. Ein sauber gemessenes Negativergebnis mit benannten Gründen ist wissenschaftlich wertvoller als ein geschöntes Positivergebnis — und im Vorstellungsgespräch überzeugender. Erwartungsgemäß zu diskutierende Punkte:
+Das Projekt ist **auch dann erfolgreich**, wenn strukturgesteuertes Feedback keinen Vorteil bringt. Ein sauber gemessenes Negativergebnis mit benannten Gründen ist wissenschaftlich wertvoller als ein geschöntes Positivergebnis - und im Vorstellungsgespräch überzeugender. Erwartungsgemäß zu diskutierende Punkte:
 
 - Moderne LLMs korrigieren sich bereits gut mit reinem Fehlermeldungs-Feedback
 - Die kanonische Referenz ist nur eine von vielen validen Lösungen (L3)
@@ -643,7 +643,7 @@ output:
 | T-1 | Unit | Tokenizer | Determinismus; α-Äquivalenz (Umbenennung ändert Sequenz nicht); leere Liste bei SyntaxError |
 | T-2 | Unit | Metriken | Identische Programme → alle Metriken = 1.0; disjunkte Programme → alle = 0.0; beide leer → 0.0 |
 | T-3 | Property | Metrik-Invariante | Für zufällige Token-Paare gilt `POS ≥ max(PPS, PSS, PES)` |
-| T-4 | Unit | Referenz-Leak (INV-1) | Planner- und Coder-Prompts enthalten die Referenzlösung nicht — als String-Assertion über den finalen Prompt |
+| T-4 | Unit | Referenz-Leak (INV-1) | Planner- und Coder-Prompts enthalten die Referenzlösung nicht - als String-Assertion über den finalen Prompt |
 | T-5 | Unit | Diagnose | Jede Kategorie wird durch mindestens einen konstruierten Metrik-Vektor ausgelöst; Reihenfolgeprüfung deterministisch |
 | T-6 | Integration | Sandbox | Endlosschleife wird durch Timeout beendet; Netzwerkzugriff schlägt fehl; Exception im Kandidatencode crasht den Host-Prozess nicht |
 | T-7 | Integration | Orchestrator | Ein Mini-Lauf über 2 Aufgaben mit gemocktem LLM läuft vollständig durch und schreibt gültige JSONL |
@@ -679,14 +679,14 @@ output:
 | R-4 | API-Kosten laufen aus dem Ruder | Niedrig | Mittel | Budget-Limit (NFR-04), kleines Modell, kleines Subset in der Entwicklung |
 | R-5 | Docker-Setup verzögert den Start | Mittel | Niedrig | Sandbox als erstes Arbeitspaket; Fallback `subprocess` + Timeout nur lokal in der Entwicklung |
 | R-6 | Referenzlösung leakt versehentlich in Coder-Prompt | Niedrig | Sehr hoch | Automatisierter Test T-4; Trennung im Datenmodell |
-| R-7 | Zeitbudget neben Studium/Werkstudentenjob reicht nicht | Mittel | Mittel | Strikte MoSCoW-Priorisierung; Kann-Ziele (Z7–Z9) sind streichbar |
+| R-7 | Zeitbudget neben Studium/Werkstudentenjob reicht nicht | Mittel | Mittel | Strikte MoSCoW-Priorisierung; Kann-Ziele (Z7-Z9) sind streichbar |
 | R-8 | Modell-Nichtdeterminismus macht Vergleich verrauscht | Hoch | Mittel | Mehrere Seeds (mind. 3), Mittelwert ± Standardabweichung |
 
 ---
 
 ## 17. Arbeitspakete und Meilensteine
 
-### AP 1 — Fundament (Woche 1)
+### AP 1 - Fundament (Woche 1)
 
 - [ ] Repository, `pyproject.toml`, Linting, CI-Grundgerüst
 - [ ] Konfigurationsmodul (Pydantic + YAML)
@@ -696,7 +696,7 @@ output:
 
 **Meilenstein M1:** Eine hartkodierte korrekte Lösung wird geladen, in der Sandbox getestet und liefert BSS = 1.
 
-### AP 2 — Metriken (Woche 2)
+### AP 2 - Metriken (Woche 2)
 
 - [ ] AST-Tokenizer mit Normalisierung (FR-501 bis FR-507)
 - [ ] Portierung POS/PPS/PSS/PES aus der Thesis (FR-601 bis FR-608)
@@ -704,7 +704,7 @@ output:
 
 **Meilenstein M2:** Die Thesis-Beispielwerte (POS 0.75, übrige 0.25) werden exakt reproduziert.
 
-### AP 3 — Agenten und Loop (Woche 3)
+### AP 3 - Agenten und Loop (Woche 3)
 
 - [ ] LLM-Client mit Retry und Kostenzählung
 - [ ] Planner-, Coder-, Tester-, Critic-Agent (FR-201 ff., FR-301 ff., FR-701 ff.)
@@ -715,7 +715,7 @@ output:
 
 **Meilenstein M3:** Ein Lauf über 5 Aufgaben in beiden Modi läuft durch und schreibt vollständige JSONL.
 
-### AP 4 — Evaluation und Veröffentlichung (Woche 4)
+### AP 4 - Evaluation und Veröffentlichung (Woche 4)
 
 - [ ] Auswertungsskript und Diagramme (FR-1001 bis FR-1006)
 - [ ] Vollständige Läufe: 2 Modi × 3 Seeds über ≥ 50 Aufgaben
@@ -732,32 +732,32 @@ output:
 Das Projekt gilt als abgeschlossen, wenn:
 
 1. Alle Muss-Anforderungen (M) implementiert und durch Tests abgedeckt sind
-2. T-8 (Thesis-Konsistenz) grün ist — die Metrik-Semantik ist nachweislich identisch
+2. T-8 (Thesis-Konsistenz) grün ist - die Metrik-Semantik ist nachweislich identisch
 3. T-4 (kein Referenz-Leak) grün ist
 4. Mindestens 50 HumanEval-Aufgaben in beiden Modi über 3 Seeds evaluiert sind
 5. Die Ergebnistabelle aus 10.4 mit echten Zahlen gefüllt ist
 6. Das README einem fachfremden Leser in unter 2 Minuten vermittelt, was das Projekt tut und was dabei herauskam
-7. Alle Limitationen (L1–L4) im README offen benannt sind
+7. Alle Limitationen (L1-L4) im README offen benannt sind
 8. Das Repository ohne Zusatzwissen per `README`-Anleitung reproduzierbar aufsetzbar ist
 
 ---
 
 ## 19. Erweiterungsoptionen
 
-Sinnvolle Anschlusspunkte nach Version 1.0 — bewusst außerhalb des Kern-Scopes gehalten:
+Sinnvolle Anschlusspunkte nach Version 1.0 - bewusst außerhalb des Kern-Scopes gehalten:
 
 | Option | Beschreibung | Aufwand |
 |---|---|---|
 | Semantische Prüfung | Zusätzliche zurückgehaltene Testfälle zur Prüfung echter Generalisierung (direkter Future-Work-Punkt der Thesis) | Mittel |
 | Referenzfreier Modus | Mehrere Kandidaten generieren; strukturelle Divergenz untereinander als Unsicherheitssignal statt Referenzvergleich | Hoch |
 | MBPP als zweiter Benchmark | Generalisierbarkeit über HumanEval hinaus prüfen | Niedrig |
-| Längere Programme | Aufgaben mit mehr als einer Funktion — dort greift strukturelles Feedback vermutlich stärker | Mittel |
+| Längere Programme | Aufgaben mit mehr als einer Funktion - dort greift strukturelles Feedback vermutlich stärker | Mittel |
 | Metrik-Paket auf PyPI | Metrik-Modul eigenständig veröffentlichen (Z9) | Niedrig |
 | GitHub Action | Metriken als PR-Kommentar auf echten Repositories | Mittel |
 
 ---
 
-## Anhang A — Bezug zur Bachelorarbeit
+## Anhang A - Bezug zur Bachelorarbeit
 
 | Thesis-Element | Verwendung im Projekt |
 |---|---|
@@ -772,7 +772,7 @@ Sinnvolle Anschlusspunkte nach Version 1.0 — bewusst außerhalb des Kern-Scope
 
 ---
 
-## Anhang B — Beispiel-Prompts (Ausgangspunkt)
+## Anhang B - Beispiel-Prompts (Ausgangspunkt)
 
 **Planner:**
 > Du erhältst eine Programmieraufgabe. Zerlege sie in nummerierte Lösungsschritte in natürlicher Sprache. Schreibe **keinen** Code. Maximal 5 Schritte.
