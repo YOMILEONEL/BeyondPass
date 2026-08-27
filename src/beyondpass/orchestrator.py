@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from beyondpass.agents.coder import CoderAttempt, preserves_signature, run_coder, try_parse_error
@@ -125,10 +127,24 @@ def _load_completed_task_ids(out_path: Path) -> set[str]:
     return completed
 
 
+def _write_run_meta(out_path: Path, settings: Settings) -> None:
+    """Schreibt die Run-Konfiguration inkl. Modell und Datum einmalig (NFR-02)."""
+    meta_path = out_path.with_suffix(".meta.json")
+    if meta_path.exists():
+        return
+    meta = {
+        "run_id": str(uuid.uuid4()),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "config": settings.model_dump(),
+    }
+    meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+
 def run(settings: Settings, tasks: list[Task], llm: LLMClient, out_path: Path) -> None:
     """Fuehrt den Loop ueber alle Aufgaben aus und haengt JSONL an (FR-1001, FR-906)."""
     completed_task_ids = _load_completed_task_ids(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    _write_run_meta(out_path, settings)
 
     with out_path.open("a", encoding="utf-8") as f:
         for task in tasks:

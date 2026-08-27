@@ -23,6 +23,16 @@ _PRICING_USD_PER_MILLION_TOKENS: dict[str, tuple[float, float]] = {
 _DEFAULT_PRICING = (3.0, 15.0)
 
 
+def estimate_cost_usd(model: str, tokens_in: int, tokens_out: int) -> float:
+    """Schaetzt die Kosten eines Aufrufs in USD (NFR-04).
+
+    Wird sowohl von `CostTracker` (waehrend eines Runs) als auch vom
+    Report-Modul (nachtraeglich aus geloggten Token-Zahlen) genutzt.
+    """
+    price_in, price_out = _PRICING_USD_PER_MILLION_TOKENS.get(model, _DEFAULT_PRICING)
+    return (tokens_in * price_in + tokens_out * price_out) / 1_000_000
+
+
 class BudgetExceededError(RuntimeError):
     """Wird ausgeloest, wenn ein Run das konfigurierte Budget ueberschreitet."""
 
@@ -49,10 +59,9 @@ class CostTracker:
     total_usd: float = field(default=0.0)
 
     def record(self, tokens_in: int, tokens_out: int) -> None:
-        price_in, price_out = _PRICING_USD_PER_MILLION_TOKENS.get(self.model, _DEFAULT_PRICING)
         self.tokens_in += tokens_in
         self.tokens_out += tokens_out
-        self.total_usd += (tokens_in * price_in + tokens_out * price_out) / 1_000_000
+        self.total_usd += estimate_cost_usd(self.model, tokens_in, tokens_out)
 
         if self.max_usd is not None and self.total_usd > self.max_usd:
             raise BudgetExceededError(

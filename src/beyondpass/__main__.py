@@ -1,7 +1,4 @@
-"""CLI-Einstiegspunkt (Requirements Abschnitt 9.3).
-
-`report` wird erst in AP4 implementiert.
-"""
+"""CLI-Einstiegspunkt (Requirements Abschnitt 9.3)."""
 
 from __future__ import annotations
 
@@ -73,6 +70,44 @@ def _run_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _expand_run_patterns(patterns: list[str]) -> list:
+    import glob as glob_module
+    from pathlib import Path
+
+    paths: list[Path] = []
+    for pattern in patterns:
+        if any(ch in pattern for ch in "*?["):
+            matched = sorted(Path(p) for p in glob_module.glob(pattern))
+            if not matched:
+                raise FileNotFoundError(f"Kein Run passt zu Muster: {pattern}")
+            paths.extend(matched)
+        else:
+            paths.append(Path(pattern))
+    return paths
+
+
+def _report_command(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from beyondpass.reporting.aggregate import compare_conditions, render_markdown
+    from beyondpass.reporting.plots import plot_comparison
+
+    paths = _expand_run_patterns(args.runs)
+    comparison = compare_conditions(paths)
+    markdown = render_markdown(comparison)
+
+    out_path = Path(args.out) if args.out else Path("results") / "summary.md"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(markdown, encoding="utf-8")
+
+    plot_path = out_path.with_suffix(".png")
+    plot_comparison(comparison, plot_path)
+
+    print(markdown)
+    print(f"Diagramm: {plot_path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -80,7 +115,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "run":
         return _run_command(args)
     if args.command == "report":
-        raise NotImplementedError("report wird in AP4 implementiert")
+        return _report_command(args)
     return 1
 
 

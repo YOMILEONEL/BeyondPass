@@ -34,14 +34,15 @@ It is a direct continuation of my Bachelor thesis, [*"Beyond Accuracy: Measuring
 
 ## Project Status
 
-The system is being built in four work packages. **Foundation, metrics, and the agent loop are done and tested; evaluation is next.**
+The system is being built in four work packages. **Foundation, metrics, the agent loop, and the reporting tool are all done and tested; the only thing missing is a paid API key to run real evaluations.**
 
 - [x] **Foundation** - typed config, HumanEval loader, Docker sandbox (isolated, no network, resource-limited) for candidate execution
 - [x] **Metrics** - AST tokenizer and the four POS/PPS/PSS/PES scores, verified to reproduce the exact worked example from the thesis (Ch. 4.2)
 - [x] **Agents & feedback loop** - Planner/Coder/Tester/Critic agents, diagnosis logic, orchestrator (baseline vs. structural modes), no-reference-leak enforced by test
-- [ ] **Evaluation & results** - full HumanEval runs across seeds, comparison report, results filled into this README
+- [x] **Reporting tool** - aggregates JSONL runs into a solve-rate/metrics comparison table and a bar chart, with mean ± std across seeds; verified against synthetic fixtures
+- [ ] **Real evaluation runs** - full HumanEval runs across seeds with a real model, filled into the table below - blocked on a paid `ANTHROPIC_API_KEY`
 
-56 tests currently pass (`pytest tests/`), all running against a mocked LLM client - no API key is required to run the test suite. The `run` CLI command needs a real `ANTHROPIC_API_KEY` (see [Configuration](#configuration)); `report` is not implemented yet - see [Project Structure](#project-structure) for what exists today versus what's planned.
+64 tests currently pass (`pytest tests/`), all running against a mocked LLM client and synthetic result files - no API key is required to run the test suite. Both `run` and `report` are fully implemented; `run` additionally needs a real `ANTHROPIC_API_KEY` (see [Configuration](#configuration)) to make actual model calls. See [Project Structure](#project-structure) for the full module layout.
 
 ## The Problem
 
@@ -172,7 +173,7 @@ beyondpass/
 │   ├── sandbox/          # Docker-based isolated execution               done
 │   ├── agents/           # Planner, Coder, Tester, Critic, LLM client    done
 │   ├── feedback/         # Diagnosis logic, feedback templates, trivial  done
-│   └── reporting/        # Aggregation and plots                        planned
+│   └── reporting/        # JSONL aggregation, comparison table, plots    done
 ├── tests/
 ├── config/
 │   └── prompts/          # Planner/Coder prompt templates (NFR-07)
@@ -182,7 +183,9 @@ beyondpass/
 
 ## Tech Stack
 
-Python · Anthropic/OpenAI API (function calling) · Docker · `ast` · `pytest` · pandas / matplotlib
+Python · Anthropic API (function calling) · Docker · `ast` · `pytest` · matplotlib
+
+Deviates slightly from the original tech-stack plan: aggregation uses the standard library (`statistics`) instead of `pandas` - one fewer dependency, same result, easier to unit-test.
 
 ## Testing
 
@@ -197,6 +200,7 @@ Notably includes:
 - **No-reference-leak test** - asserts the reference solution never appears in the Planner or Coder prompts (INV-1)
 - **Diagnosis and trivial-solution tests** - each feedback category and the trivial/suspicious flags are triggered by a constructed example
 - **Orchestrator mini-run test** - a full baseline/structural loop over 2 HumanEval tasks with a scripted fake LLM client
+- **Reporting tests** - solve rate, per-condition metrics, and mean ± std across seeds are checked against hand-computed expected values on synthetic JSONL fixtures; a full `report` CLI invocation is verified end-to-end
 
 None of the tests call a real LLM API - a `FakeLLMClient` with scripted responses stands in for the model, so the full suite runs without any API key. Tests that exercise the real sandbox require a running Docker daemon and are skipped automatically otherwise.
 
