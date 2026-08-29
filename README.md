@@ -44,6 +44,7 @@ The system is being built in four work packages. **Foundation, metrics, the agen
 - [x] **MBPP as a second benchmark** and **partial test-case correctness** (for MBPP's discrete asserts) via the same adapter pattern
 - [x] **Interactive dashboard** (Streamlit, optional) - per-task drill-down into iteration history, code, and feedback, on top of the same reporting logic
 - [x] **Metrics module packaged standalone** (`packages/beyondpass-metrics/`) - builds and installs independently; not published to PyPI yet, that step is left to the maintainer
+- [x] **Structured logging** - per-run/per-task/per-iteration events, retries, and budget errors, with a configurable log level (`output.log_level`)
 - [ ] **Real evaluation runs** - full HumanEval runs across seeds with a real model, filled into the table below - blocked on a paid `ANTHROPIC_API_KEY`
 
 80 tests currently pass (`pytest tests/`), all running against a mocked LLM client and synthetic result files - no API key is required to run the test suite. `run` and `report` are fully implemented; `run` additionally needs a real `ANTHROPIC_API_KEY` (see [Configuration](#configuration)) to make actual model calls. See [Project Structure](#project-structure) for the full module layout.
@@ -136,7 +137,7 @@ cp .env.example .env
 export ANTHROPIC_API_KEY="your-key-here"
 ```
 
-Adjust `config/default.yaml` if needed (model, task limit, budget cap, iteration count).
+Adjust `config/default.yaml` if needed (model, task limit, budget cap, iteration count). `output.log_level` (default `INFO`) controls the structured per-task/per-iteration log output (`beyondpass.*` loggers only - third-party libraries stay quiet); set it to `DEBUG` for sandbox-level detail or `WARNING` to only see retries and budget/errors.
 
 ## Usage
 
@@ -235,6 +236,7 @@ Notably includes:
 - **Orchestrator mini-run test** - a full baseline/structural loop over 2 HumanEval tasks with a scripted fake LLM client
 - **Reporting tests** - solve rate, per-condition metrics, and mean ± std across seeds are checked against hand-computed expected values on synthetic JSONL fixtures; a full `report` CLI invocation is verified end-to-end
 - **Dashboard tests** - `streamlit.testing.v1.AppTest` drives the actual dashboard script headlessly (empty state, comparison table, per-task explorer) against synthetic fixtures; skipped automatically if Streamlit isn't installed
+- **Logging tests** - verify retries, budget-exceeded, and per-iteration events are actually logged (via `caplog`), and that only the `beyondpass.*` logger namespace is configured (third-party libraries like httpx don't get pulled into INFO/DEBUG output)
 
 None of the tests call a real LLM API - a `FakeLLMClient` with scripted responses stands in for the model, so the full suite runs without any API key. Tests that exercise the real sandbox require a running Docker daemon and are skipped automatically otherwise.
 

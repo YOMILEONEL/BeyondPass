@@ -14,6 +14,7 @@ Testfall-Korrektheit, nur wenn der jeweilige Benchmark-Loader eine
 
 from __future__ import annotations
 
+import logging
 import re
 import tempfile
 import uuid
@@ -22,6 +23,8 @@ from pathlib import Path
 
 import docker
 from docker.errors import DockerException, ImageNotFound, NotFound
+
+logger = logging.getLogger(__name__)
 
 IMAGE_TAG = "beyondpass-sandbox:latest"
 _DOCKERFILE_DIR = Path(__file__).resolve().parent
@@ -88,6 +91,7 @@ def run_in_sandbox(
     try:
         client = docker.from_env()
     except DockerException as exc:
+        logger.error("Docker nicht erreichbar: %s", exc)
         return SandboxResult(
             bss=0, tests_passed=0, tests_total=1, error_message=f"Docker nicht erreichbar: {exc}"
         )
@@ -99,6 +103,9 @@ def run_in_sandbox(
         container = None
         try:
             _ensure_image(client)
+            logger.debug(
+                "Starte Sandbox-Container (timeout=%ds, memory=%dmb)", timeout_s, memory_mb
+            )
             container = client.containers.run(
                 IMAGE_TAG,
                 command=["python", f"{_CONTAINER_WORKDIR}/script.py"],
@@ -133,6 +140,7 @@ def run_in_sandbox(
                     error_message=logs.strip() or None,
                 )
             except Exception:
+                logger.warning("Sandbox-Timeout nach %ds erreicht, kille Container", timeout_s)
                 try:
                     container.kill()
                 except DockerException:
@@ -144,6 +152,7 @@ def run_in_sandbox(
                     error_message=f"Timeout nach {timeout_s}s erreicht",
                 )
         except DockerException as exc:
+            logger.error("Sandbox-Fehler: %s", exc)
             return SandboxResult(bss=0, tests_passed=0, tests_total=1, error_message=str(exc))
         finally:
             if container is not None:

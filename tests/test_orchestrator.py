@@ -5,6 +5,7 @@ Testausfuehrung) -- daher wie test_sandbox.py als Docker-Test markiert.
 """
 
 import json
+import logging
 
 import pytest
 
@@ -20,7 +21,7 @@ def _correct_code_response(task) -> str:
     return f"```python\n{task.prompt}{task.reference_solution}\n```"
 
 
-def test_orchestrator_mini_run_writes_valid_jsonl(tmp_path):
+def test_orchestrator_mini_run_writes_valid_jsonl(tmp_path, caplog):
     tasks = load_humaneval(task_ids=["HumanEval/0", "HumanEval/1"])
     settings = load_settings()
     settings.run.mode = "structural"
@@ -34,7 +35,13 @@ def test_orchestrator_mini_run_writes_valid_jsonl(tmp_path):
     llm = FakeLLMClient(responses=responses)
     out_path = tmp_path / "run.jsonl"
 
-    run(settings, tasks, llm, out_path)
+    with caplog.at_level(logging.INFO, logger="beyondpass.orchestrator"):
+        run(settings, tasks, llm, out_path)
+
+    messages = [record.message for record in caplog.records]
+    assert any("Run gestartet" in m for m in messages)
+    assert any("Run beendet" in m for m in messages)
+    assert any("geloest nach" in m for m in messages)
 
     lines = out_path.read_text(encoding="utf-8").strip().splitlines()
     assert len(lines) == 2

@@ -8,6 +8,7 @@ komplettes Benchmark-Subset und schreibt JSONL (FR-1001), mit Resume-Support
 from __future__ import annotations
 
 import json
+import logging
 import threading
 import time
 import uuid
@@ -25,6 +26,8 @@ from beyondpass.config import Settings
 from beyondpass.feedback.templates import baseline_feedback_text, feedback_text_for
 from beyondpass.models import IterationResult
 from beyondpass.sandbox.docker_runner import SandboxResult
+
+logger = logging.getLogger(__name__)
 
 
 def run_task_loop(
@@ -84,6 +87,7 @@ def run_task_loop(
         if not preserves_signature(candidate_code, task.entry_point):
             flags.append("SIGNATURE_MISMATCH")
 
+        duration_s = time.monotonic() - start
         results.append(
             IterationResult(
                 task_id=task.task_id,
@@ -104,14 +108,26 @@ def run_task_loop(
                 flags=flags,
                 tokens_in=tokens_in,
                 tokens_out=tokens_out,
-                duration_s=time.monotonic() - start,
+                duration_s=duration_s,
             )
         )
 
+        logger.info(
+            "task=%s iteration=%d/%d bss=%d diagnosis=%s duration=%.2fs",
+            task.task_id, iteration, settings.run.max_iterations,
+            sandbox_result.bss, critic_result.diagnosis.value, duration_s,
+        )
+
         if sandbox_result.bss == 1:
+            logger.info("task=%s geloest nach %d Iteration(en)", task.task_id, iteration)
             break
 
         history.append(CoderAttempt(code=candidate_code, feedback_text=feedback_text or ""))
+    else:
+        logger.info(
+            "task=%s nicht geloest nach %d Iteration(en) (Budget erschoepft)",
+            task.task_id, settings.run.max_iterations,
+        )
 
     return results
 
@@ -155,6 +171,12 @@ def run(settings: Settings, tasks: list[Task], llm: LLMClient, out_path: Path) -
     _write_run_meta(out_path, settings)
 
     pending = [task for task in tasks if task.task_id not in completed_task_ids]
+    workers = max(1, settings.run.parallel_workers)
+    logger.info(
+        "Run gestartet: %d Aufgabe(n) gesamt, %d bereits abgeschlossen, %d ausstehend, "
+        "mode=%s, workers=%d, out=%s",
+        len(tasks), len(completed_task_ids), len(pending), settings.run.mode, workers, out_path,
+    )
     write_lock = threading.Lock()
 
     with out_path.open("a", encoding="utf-8") as f:
@@ -165,7 +187,6 @@ def run(settings: Settings, tasks: list[Task], llm: LLMClient, out_path: Path) -
                     f.write(result.to_json_line() + "\n")
                     f.flush()
 
-        workers = max(1, settings.run.parallel_workers)
         if workers == 1:
             for task in pending:
                 _process(task)
@@ -174,3 +195,5 @@ def run(settings: Settings, tasks: list[Task], llm: LLMClient, out_path: Path) -
                 futures = [executor.submit(_process, task) for task in pending]
                 for future in as_completed(futures):
                     future.result()
+
+    logger.info("Run beendet: %d Aufgabe(n) verarbeitet", len(pending))

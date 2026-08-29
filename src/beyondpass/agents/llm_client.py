@@ -8,10 +8,13 @@ durch einen Fake ersetzen, ganz ohne echten API-Key oder Netzwerkzugriff
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from dataclasses import dataclass, field
 from typing import Protocol
+
+logger = logging.getLogger(__name__)
 
 # Naeherungswerte in USD pro 1 Million Tokens. Dienen nur der groben
 # Budgetkontrolle (NFR-04) und sollten bei Bedarf an die aktuelle
@@ -79,6 +82,10 @@ class CostTracker:
             self.total_usd += estimate_cost_usd(self.model, tokens_in, tokens_out)
 
             if self.max_usd is not None and self.total_usd > self.max_usd:
+                logger.error(
+                    "Budget ueberschritten: $%.4f > $%.2f (Modell=%s)",
+                    self.total_usd, self.max_usd, self.model,
+                )
                 raise BudgetExceededError(
                     f"Budget von ${self.max_usd:.2f} ueberschritten (aktuell ${self.total_usd:.4f})"
                 )
@@ -136,8 +143,16 @@ class AnthropicLLMClient:
             except anthropic.APIStatusError as exc:
                 last_error = exc
                 if attempt < self._max_retries:
-                    time.sleep(2**attempt)
+                    wait_s = 2**attempt
+                    logger.warning(
+                        "LLM-Aufruf fehlgeschlagen (Versuch %d/%d): %s -- retry in %ds",
+                        attempt + 1, self._max_retries + 1, exc, wait_s,
+                    )
+                    time.sleep(wait_s)
 
+        logger.error(
+            "LLM-Aufruf nach %d Versuchen endgueltig fehlgeschlagen", self._max_retries + 1
+        )
         raise RuntimeError(
             f"LLM-Aufruf nach {self._max_retries + 1} Versuchen fehlgeschlagen"
         ) from last_error

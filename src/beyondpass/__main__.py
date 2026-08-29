@@ -3,7 +3,27 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
+
+
+def _configure_logging(level: str, force: bool = False) -> None:
+    """Strukturiertes Logging mit Log-Level (NFR-09).
+
+    Konfiguriert bewusst nur den `beyondpass`-Logger-Namespace, nicht den
+    Root-Logger (`logging.basicConfig`) -- sonst wuerden Drittanbieter-
+    Bibliotheken (httpx, huggingface_hub, urllib3, ...) bei INFO/DEBUG ihre
+    eigene, sehr geschwaetzige HTTP-Logs mit ausgeben.
+    """
+    beyondpass_logger = logging.getLogger("beyondpass")
+    if force:
+        beyondpass_logger.handlers.clear()
+    if not beyondpass_logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s %(name)s: %(message)s"))
+        beyondpass_logger.addHandler(handler)
+    beyondpass_logger.setLevel(getattr(logging, level.upper(), logging.INFO))
+    beyondpass_logger.propagate = False
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -49,6 +69,8 @@ def _run_command(args: argparse.Namespace) -> int:
         settings.llm.model = args.model
     if args.limit is not None:
         settings.benchmark.limit = args.limit
+
+    _configure_logging(settings.output.log_level, force=True)
 
     if settings.llm.provider != "anthropic":
         raise NotImplementedError(
@@ -112,6 +134,7 @@ def _report_command(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI-Einstiegspunkt; `argv=None` liest von `sys.argv` (fuer Tests explizit uebergeben)."""
+    _configure_logging("INFO")
     parser = build_parser()
     args = parser.parse_args(argv)
 
