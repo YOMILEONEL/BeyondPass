@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Multi-Agent-Code-Synthese mit strukturgesteuertem Feedback-Loop"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
 dependencies = [
     "pydantic-settings>=2.0",
     "pyyaml>=6.0",
@@ -45,9 +45,19 @@ markers = [
 ]
 
 [tool.mypy]
-python_version = "3.10"
+# Kein explizites `python_version`-Pin: das zwingt mypy, auch fremde,
+# mitgelieferte Typ-Stubs (z. B. numpy) gegen eine niedrigere Syntaxversion
+# zu pruefen als die tatsaechlich installierte/laufende (3.12), was dort zu
+# falschen Syntaxfehlern fuehrt (PEP-695-`type`-Statements in numpys .pyi).
+# Ohne Pin nutzt mypy die Version des Interpreters, der es ausfuehrt.
 
-# `docker` and `datasets` ship no type stubs / py.typed marker upstream.
+# `docker` und `datasets` liefern keine Typ-Stubs/`py.typed`-Marker mit.
 [[tool.mypy.overrides]]
 module = ["docker.*", "datasets.*"]
+ignore_missing_imports = true
+
+# `streamlit` ist nur im optionalen `dashboard`-Extra, nicht in `dev` --
+# CI installiert nur `.[dev]`, also ist es dort schlicht nicht installiert.
+[[tool.mypy.overrides]]
+module = ["streamlit.*"]
 ignore_missing_imports = true
