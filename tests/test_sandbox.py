@@ -56,6 +56,32 @@ def test_correct_solution_passes():
     assert result.error_message is None
 
 
+def test_no_marker_falls_back_to_binary_counts():
+    """FR-406-Regressionsschutz: ohne @@BEYONDPASS_TESTS@@-Marker-Zeile
+    (z. B. HumanEval, oder hier ein simples Skript ohne Zaehl-Harness)
+    bleibt tests_passed/tests_total exakt 1/1 bzw. 0/1 wie vor FR-406."""
+    candidate = "def add(a, b):\n    return a + b\n"
+
+    ok = run_in_sandbox(candidate, "assert add(2, 3) == 5\n", timeout_s=8)
+    assert (ok.tests_passed, ok.tests_total) == (1, 1)
+
+    fail = run_in_sandbox(candidate, "assert add(2, 3) == 999\n", timeout_s=8)
+    assert (fail.tests_passed, fail.tests_total) == (0, 1)
+
+
+def test_marker_line_overrides_default_counts():
+    """FR-406: gibt test_code selbst eine @@BEYONDPASS_TESTS@@-Zeile aus
+    (wie benchmarks/mbpp.py es tut), uebernimmt die Sandbox diese Werte."""
+    candidate = "def noop():\n    pass\n"
+    test_code = 'print("@@BEYONDPASS_TESTS@@ 2/5")\n'
+
+    result = run_in_sandbox(candidate, test_code, timeout_s=8)
+
+    assert result.bss == 1
+    assert result.tests_passed == 2
+    assert result.tests_total == 5
+
+
 def test_milestone_1_correct_humaneval_solution():
     """M1: HumanEval/0 mit der kanonischen Loesung muss BSS = 1 liefern."""
     from beyondpass.benchmarks.humaneval import load_humaneval

@@ -1,6 +1,8 @@
 """Docker-Sandbox fuer die isolierte Ausfuehrung von LLM-generiertem Code.
 
-Erfuellt FR-401 bis FR-407 sowie SEC-1 bis SEC-6:
+Erfuellt FR-401 bis FR-407 sowie SEC-1 bis SEC-6 (FR-406, partielle
+Testfall-Korrektheit, nur wenn der jeweilige Benchmark-Loader eine
+`@@BEYONDPASS_TESTS@@`-Marker-Zeile ausgibt -- siehe `_parse_test_counts`):
 - kein `exec`/`eval` im Host-Prozess (SEC-1)
 - Container ohne Netzwerkzugang (SEC-2, FR-405)
 - Ausfuehrung als nicht-privilegierter Nutzer (SEC-3)
@@ -12,6 +14,7 @@ Erfuellt FR-401 bis FR-407 sowie SEC-1 bis SEC-6:
 
 from __future__ import annotations
 
+import re
 import tempfile
 import uuid
 from dataclasses import dataclass
@@ -25,6 +28,20 @@ _DOCKERFILE_DIR = Path(__file__).resolve().parent
 _CONTAINER_WORKDIR = "/sandbox"
 _PIDS_LIMIT = 64
 _NANO_CPUS = 1_000_000_000  # 1 CPU-Kern (FR-407, SEC-4)
+
+# Optionale Partial-Correctness-Marker-Zeile (FR-406), z. B. von
+# benchmarks/mbpp.py erzeugt. Rein additiv: Benchmarks, deren test_code
+# diese Zeile nicht ausgibt (z. B. HumanEval), sind unbetroffen.
+_TESTS_MARKER_RE = re.compile(r"@@BEYONDPASS_TESTS@@ (\d+)/(\d+)")
+
+
+def _parse_test_counts(logs: str, default_passed: int, default_total: int) -> tuple[int, int]:
+    """Liest tests_passed/tests_total aus der Marker-Zeile, falls vorhanden,
+    sonst bleiben die uebergebenen Default-Werte (bisheriges Verhalten)."""
+    match = _TESTS_MARKER_RE.search(logs)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return default_passed, default_total
 
 
 @dataclass
@@ -101,9 +118,19 @@ def run_in_sandbox(
                 exit_code = result.get("StatusCode", 1)
                 logs = container.logs(stdout=True, stderr=True).decode("utf-8", errors="replace")
                 if exit_code == 0:
-                    return SandboxResult(bss=1, tests_passed=1, tests_total=1, error_message=None)
+                    tests_passed, tests_total = _parse_test_counts(logs, 1, 1)
+                    return SandboxResult(
+                        bss=1,
+                        tests_passed=tests_passed,
+                        tests_total=tests_total,
+                        error_message=None,
+                    )
+                tests_passed, tests_total = _parse_test_counts(logs, 0, 1)
                 return SandboxResult(
-                    bss=0, tests_passed=0, tests_total=1, error_message=logs.strip() or None
+                    bss=0,
+                    tests_passed=tests_passed,
+                    tests_total=tests_total,
+                    error_message=logs.strip() or None,
                 )
             except Exception:
                 try:

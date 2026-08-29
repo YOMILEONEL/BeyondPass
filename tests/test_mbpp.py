@@ -41,6 +41,15 @@ def test_preamble_before_function_is_preserved_in_prompt():
     assert task.reference_program.count("def count_common") == 1
 
 
+def test_test_code_contains_partial_correctness_harness():
+    """FR-406: test_code zaehlt Asserts einzeln statt beim ersten
+    Fehlschlag abzubrechen -- Struktur-Check ohne Docker."""
+    task = load_mbpp(task_ids=["MBPP/11"])[0]
+
+    assert "@@BEYONDPASS_TESTS@@" in task.test_code
+    assert "except Exception" in task.test_code
+
+
 @pytest.mark.docker
 def test_canonical_solution_passes_its_own_tests():
     """Analog zu T-6/M1 fuer HumanEval: die MBPP-Referenzloesung muss ihre
@@ -52,3 +61,25 @@ def test_canonical_solution_passes_its_own_tests():
     result = run_in_sandbox(candidate_code, task.test_code, timeout_s=10)
 
     assert result.bss == 1
+    assert result.tests_total > 0
+    assert result.tests_passed == result.tests_total
+
+
+@pytest.mark.docker
+def test_partial_correctness_is_tracked_for_mbpp():
+    """FR-406: eine Loesung, die nur einen Teil der Asserts besteht, muss
+    das auch in tests_passed/tests_total widerspiegeln, nicht nur BSS=0."""
+    task = load_mbpp(task_ids=["MBPP/11"])[0]
+    # remove_Occ: nur der dritte Testfall ("PHP", "P") -> "H" wird hartkodiert bedient.
+    partial_solution = (
+        'def remove_Occ(s, ch):\n'
+        '    if s == "PHP" and ch == "P":\n'
+        '        return "H"\n'
+        '    return s\n'
+    )
+
+    result = run_in_sandbox(partial_solution, task.test_code, timeout_s=10)
+
+    assert result.bss == 0
+    assert result.tests_total == 3
+    assert result.tests_passed == 1
