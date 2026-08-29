@@ -100,7 +100,9 @@ def _render() -> None:
         {"Metrik": label, **{mode: metric_value(row, key) for mode, row in comparison.items()}}
         for key, label in _CHART_METRICS
     ]
-    st.bar_chart(chart_rows, x="Metrik", y=sorted(comparison.keys()))
+    # stack=False: die Bedingungen sollen nebeneinander verglichen werden,
+    # nicht aufsummiert (eine gestapelte Summe zweier Scores ist bedeutungslos).
+    st.bar_chart(chart_rows, x="Metrik", y=sorted(comparison.keys()), stack=False)
 
     all_rows = load_all_iterations(paths)
 
