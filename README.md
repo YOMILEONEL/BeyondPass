@@ -43,6 +43,7 @@ The system is being built in four work packages. **Foundation, metrics, the agen
 - [x] **Reporting tool** - aggregates JSONL runs into a solve-rate/metrics comparison table and a bar chart, with mean ± std across seeds; verified against synthetic fixtures
 - [x] **MBPP as a second benchmark** and **partial test-case correctness** (for MBPP's discrete asserts) via the same adapter pattern
 - [x] **Interactive dashboard** (Streamlit, optional) - per-task drill-down into iteration history, code, and feedback, on top of the same reporting logic
+- [x] **Metrics module packaged standalone** (`packages/beyondpass-metrics/`) - builds and installs independently; not published to PyPI yet, that step is left to the maintainer
 - [ ] **Real evaluation runs** - full HumanEval runs across seeds with a real model, filled into the table below - blocked on a paid `ANTHROPIC_API_KEY`
 
 80 tests currently pass (`pytest tests/`), all running against a mocked LLM client and synthetic result files - no API key is required to run the test suite. `run` and `report` are fully implemented; `run` additionally needs a real `ANTHROPIC_API_KEY` (see [Configuration](#configuration)) to make actual model calls. See [Project Structure](#project-structure) for the full module layout.
@@ -202,8 +203,16 @@ beyondpass/
 ├── config/
 │   └── prompts/          # Planner/Coder prompt templates (NFR-07)
 ├── docs/                 # Requirements spec + thesis PDF
+├── packages/
+│   └── beyondpass-metrics/  # Standalone package (Z9) - see below
 └── results/
 ```
+
+### `packages/beyondpass-metrics/`
+
+A self-contained copy of the metrics module (`tokenizer.py` + `scores.py`), packaged so it can be built and installed independently of the rest of BeyondPass - `pip install -e .` and `import beyondpass_metrics` with zero other dependencies. It carries its own tests (including the thesis-consistency check) and its own README.
+
+**Not published to PyPI.** It's currently a snapshot, not a live dependency of the main `beyondpass` package - publishing it means uploading to a public registry under someone's account, which is a decision only the maintainer can make; see [packages/beyondpass-metrics/README.md](packages/beyondpass-metrics/README.md) for how to do that when ready.
 
 ## Tech Stack
 
