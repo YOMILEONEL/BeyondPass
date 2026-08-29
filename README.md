@@ -23,6 +23,7 @@ It is a direct continuation of my Bachelor thesis, [*"Beyond Accuracy: Measuring
 - [Key Design Constraints](#key-design-constraints)
 - [Getting Started](#getting-started)
 - [Usage](#usage)
+- [Dashboard](#dashboard)
 - [Project Structure](#project-structure)
 - [Tech Stack](#tech-stack)
 - [Testing](#testing)
@@ -163,6 +164,23 @@ python -m beyondpass report \
 # Optional: explore results interactively (needs `pip install -e ".[dashboard]"`)
 streamlit run src/beyondpass/dashboard.py
 ```
+
+## Dashboard
+
+An optional Streamlit dashboard reads the same JSONL run files as the `report` command and adds a per-task drill-down that the markdown report doesn't have:
+
+![BeyondPass dashboard: comparison table and chart](docs/dashboard-screenshot.png)
+
+- **Comparison table + chart** - baseline vs. structural, mean ± std across seeds, shown side by side per metric (not stacked - two independent scores summed together wouldn't mean anything).
+- **Diagnosis category distribution** - how often each feedback category (`SUCCESS`, `WRONG_ORDER`, `NEAR_MISS`, ...) occurred across all iterations.
+- **Per-task explorer** - pick a task from a dropdown and expand any of its iterations to see the exact metrics, the generated code, the feedback text, and any trivial/suspicious flags for that attempt.
+
+```bash
+pip install -e ".[dashboard]"
+streamlit run src/beyondpass/dashboard.py
+```
+
+It defaults to `results/*.jsonl`; type a different glob pattern into the text box at the top if your runs live elsewhere. Kept as an optional extra so the core `pip install -e ".[dev]"` setup doesn't need Streamlit.
 
 ## Project Structure
 
