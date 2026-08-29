@@ -40,9 +40,11 @@ The system is being built in four work packages. **Foundation, metrics, the agen
 - [x] **Metrics** - AST tokenizer and the four POS/PPS/PSS/PES scores, verified to reproduce the exact worked example from the thesis (Ch. 4.2)
 - [x] **Agents & feedback loop** - Planner/Coder/Tester/Critic agents, diagnosis logic, orchestrator (baseline vs. structural modes), no-reference-leak enforced by test
 - [x] **Reporting tool** - aggregates JSONL runs into a solve-rate/metrics comparison table and a bar chart, with mean ± std across seeds; verified against synthetic fixtures
+- [x] **MBPP as a second benchmark** and **partial test-case correctness** (for MBPP's discrete asserts) via the same adapter pattern
+- [x] **Interactive dashboard** (Streamlit, optional) - per-task drill-down into iteration history, code, and feedback, on top of the same reporting logic
 - [ ] **Real evaluation runs** - full HumanEval runs across seeds with a real model, filled into the table below - blocked on a paid `ANTHROPIC_API_KEY`
 
-64 tests currently pass (`pytest tests/`), all running against a mocked LLM client and synthetic result files - no API key is required to run the test suite. Both `run` and `report` are fully implemented; `run` additionally needs a real `ANTHROPIC_API_KEY` (see [Configuration](#configuration)) to make actual model calls. See [Project Structure](#project-structure) for the full module layout.
+80 tests currently pass (`pytest tests/`), all running against a mocked LLM client and synthetic result files - no API key is required to run the test suite. `run` and `report` are fully implemented; `run` additionally needs a real `ANTHROPIC_API_KEY` (see [Configuration](#configuration)) to make actual model calls. See [Project Structure](#project-structure) for the full module layout.
 
 ## The Problem
 
@@ -157,6 +159,9 @@ python -m beyondpass run \
 python -m beyondpass report \
     --runs results/*.jsonl \
     --out results/summary.md
+
+# Optional: explore results interactively (needs `pip install -e ".[dashboard]"`)
+streamlit run src/beyondpass/dashboard.py
 ```
 
 ## Project Structure
@@ -168,6 +173,7 @@ beyondpass/
 │   ├── models.py         # IterationResult data model                    done
 │   ├── orchestrator.py   # Iteration loop (baseline/structural, resume)  done
 │   ├── prompts.py        # Loads config/prompts/*.txt                    done
+│   ├── dashboard.py       # Streamlit dashboard (optional, Z7)           done
 │   ├── benchmarks/       # Task loaders: HumanEval, MBPP (adapter pattern) done
 │   ├── metrics/          # AST tokenizer + POS/PPS/PSS/PES               done
 │   ├── sandbox/          # Docker-based isolated execution               done
@@ -183,7 +189,7 @@ beyondpass/
 
 ## Tech Stack
 
-Python · Anthropic API (function calling) · Docker · `ast` · `pytest` · `mypy` · matplotlib
+Python · Anthropic API (function calling) · Docker · `ast` · `pytest` · `mypy` · matplotlib · Streamlit (optional)
 
 Deviates slightly from the original tech-stack plan: aggregation uses the standard library (`statistics`) instead of `pandas` - one fewer dependency, same result, easier to unit-test.
 
@@ -201,6 +207,7 @@ Notably includes:
 - **Diagnosis and trivial-solution tests** - each feedback category and the trivial/suspicious flags are triggered by a constructed example
 - **Orchestrator mini-run test** - a full baseline/structural loop over 2 HumanEval tasks with a scripted fake LLM client
 - **Reporting tests** - solve rate, per-condition metrics, and mean ± std across seeds are checked against hand-computed expected values on synthetic JSONL fixtures; a full `report` CLI invocation is verified end-to-end
+- **Dashboard tests** - `streamlit.testing.v1.AppTest` drives the actual dashboard script headlessly (empty state, comparison table, per-task explorer) against synthetic fixtures; skipped automatically if Streamlit isn't installed
 
 None of the tests call a real LLM API - a `FakeLLMClient` with scripted responses stands in for the model, so the full suite runs without any API key. Tests that exercise the real sandbox require a running Docker daemon and are skipped automatically otherwise.
 
